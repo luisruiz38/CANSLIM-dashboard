@@ -1,0 +1,28 @@
+# Environment / secrets — NEVER commit these
+.env
+*.env
+secrets.toml
+.streamlit/secrets.toml
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
