@@ -99,10 +99,15 @@ def yoy_pct(series: pd.Series) -> pd.Series:
 # Data helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=900, show_spinner=False)
+@st.cache_data(ttl=1800, show_spinner=False)
 def load_data(sym):
-    tk = yf.Ticker(sym)
-    info = tk.info or {}
+    try:
+        tk = yf.Ticker(sym)
+        info = tk.info or {}
+    except Exception as e:
+        if "rate" in str(e).lower() or "429" in str(e):
+            raise RuntimeError("RATE_LIMIT")
+        raise
     qis  = tk.quarterly_income_stmt
     bs   = tk.balance_sheet
     cf   = tk.cashflow
@@ -465,7 +470,20 @@ if not sym:
     st.stop()
 
 with st.spinner(f"Loading {sym}…"):
-    info, qis, ed, bs, cf, ih = load_data(sym)
+    try:
+        info, qis, ed, bs, cf, ih = load_data(sym)
+    except RuntimeError as e:
+        if "RATE_LIMIT" in str(e):
+            st.warning("⚠️ Yahoo Finance is temporarily rate-limiting requests. Wait 30–60 seconds and try again.")
+        else:
+            st.error(f"Failed to load data: {e}")
+        st.stop()
+    except Exception as e:
+        if "rate" in str(e).lower() or "429" in str(e):
+            st.warning("⚠️ Yahoo Finance is temporarily rate-limiting requests. Wait 30–60 seconds and try again.")
+        else:
+            st.error(f"Failed to load data: {e}")
+        st.stop()
 
 if not info or info.get("quoteType") is None:
     st.error(f"No data for **{sym}**.")
